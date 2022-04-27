@@ -1,0 +1,17 @@
+[package]
+name = "abort-on-drop"
+version = "0.1.0"
+author = "Yibo Cao <cyb@ieee.org>"
+edition = "2021"
+license = "BSD-2-Clause"
+repository = "http://github.com/cyb0124/abort-on-drop"
+categories = ["asynchronous"]
+keywords = ["task", "cancel", "abort", "drop", "join"]
+description = "A wrapper of Tokio's JoinHandle that aborts the task when it's dropped, while still allowing it to be awaited for joining."
+
+[dev-dependencies]
+futures-util = "0"
+
+[dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+pin-project-lite = "0"
