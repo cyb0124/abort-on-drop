@@ -1,6 +1,6 @@
 [package]
 name = "abort-on-drop"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Yibo Cao <cyb@ieee.org>"]
 edition = "2021"
 license = "BSD-2-Clause"
@@ -14,4 +14,4 @@ futures-util = "0"
 
 [dependencies]
 tokio = { version = "1", features = ["rt", "macros"] }
-pin-project-lite = "0"
+pin-project-lite = "0.2.9"
