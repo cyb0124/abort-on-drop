@@ -6,6 +6,7 @@
 
 use pin_project_lite::pin_project;
 use std::future::Future;
+use std::ops::Deref;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::task::JoinHandle;
@@ -33,6 +34,13 @@ impl<T> Future for ChildTask<T> {
 impl<T> From<JoinHandle<T>> for ChildTask<T> {
     fn from(inner: JoinHandle<T>) -> Self {
         Self { inner }
+    }
+}
+
+impl<T> Deref for ChildTask<T> {
+    type Target = JoinHandle<T>;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
 }
 
@@ -95,5 +103,35 @@ mod tests {
             .unwrap(),
             5
         )
+    }
+
+    #[tokio::test]
+    async fn manually_abort_before_drop() {
+        let dropped = Arc::new(RwLock::new(false));
+        let sentry = Sentry(dropped.clone());
+        let task = ChildTask::from(tokio::spawn(async move {
+            let _sentry = sentry;
+            pending::<()>().await
+        }));
+        yield_now().await;
+        assert!(!*dropped.read().unwrap());
+        task.abort();
+        yield_now().await;
+        assert!(*dropped.read().unwrap());
+    }
+
+    #[tokio::test]
+    async fn manually_abort_then_join() {
+        let dropped = Arc::new(RwLock::new(false));
+        let sentry = Sentry(dropped.clone());
+        let task = ChildTask::from(tokio::spawn(async move {
+            let _sentry = sentry;
+            pending::<()>().await
+        }));
+        yield_now().await;
+        assert!(!*dropped.read().unwrap());
+        task.abort();
+        yield_now().await;
+        assert!(task.await.is_err());
     }
 }
