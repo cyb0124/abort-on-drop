@@ -12,6 +12,7 @@ use std::task::{Context, Poll};
 use tokio::task::JoinHandle;
 
 pin_project! {
+    #[derive(Debug)]
     pub struct ChildTask<T> {
         #[pin]
         inner: JoinHandle<T>
