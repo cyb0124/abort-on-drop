@@ -4,31 +4,27 @@
 //! For example, if task A spawned task B but is doing something else, and task B is waiting for task C to join,
 //! aborting A will also abort both B and C.
 
-use pin_project_lite::pin_project;
 use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::task::JoinHandle;
 
-pin_project! {
-    #[derive(Debug)]
-    pub struct ChildTask<T> {
-        #[pin]
-        inner: JoinHandle<T>
-    }
+#[derive(Debug)]
+pub struct ChildTask<T> {
+    inner: JoinHandle<T>,
+}
 
-    impl<T> PinnedDrop for ChildTask<T> {
-        fn drop(this: Pin<&mut Self>) {
-            this.inner.abort()
-        }
+impl<T> Drop for ChildTask<T> {
+    fn drop(&mut self) {
+        self.inner.abort()
     }
 }
 
 impl<T> Future for ChildTask<T> {
     type Output = <JoinHandle<T> as Future>::Output;
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.project().inner.poll(cx)
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        Pin::new(&mut self.inner).poll(cx)
     }
 }
 
