@@ -11,6 +11,7 @@ description = "A wrapper of Tokio's JoinHandle that aborts the task when it's dr
 
 [dev-dependencies]
 futures-util = "0"
+tokio-test = "0.4"
 
 [dependencies]
 tokio = { version = "1", features = ["rt", "macros"] }

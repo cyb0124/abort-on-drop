@@ -3,6 +3,19 @@
 //!
 //! For example, if task A spawned task B but is doing something else, and task B is waiting for task C to join,
 //! aborting A will also abort both B and C.
+//!
+//! Basic usage:
+//! ```
+//! # tokio_test::block_on(async {
+//! use abort_on_drop::ChildTask;
+//! {
+//!   // Wrap a normal tokio JoinHandle in a ChidTask to make it abort when dropped
+//!   let task_a = ChildTask::from(tokio::spawn(async { }));
+//!   let task_b = tokio::spawn(async { });
+//! } // task_a get dropped here
+//! // task_a has now been aborted, but task_b is still running in the background
+//! # })
+//! ```
 
 use std::future::Future;
 use std::ops::Deref;
@@ -15,6 +28,8 @@ pub struct ChildTask<T> {
     inner: JoinHandle<T>,
 }
 
+/// Automatically aborts the wrapped JoinHandle stopping further
+/// execution of the task.
 impl<T> Drop for ChildTask<T> {
     fn drop(&mut self) {
         self.inner.abort()
@@ -28,6 +43,12 @@ impl<T> Future for ChildTask<T> {
     }
 }
 
+/// Allows you to easily wrap any JoinHandle in this type:
+/// ```
+/// # tokio_test::block_on(async {
+/// let task = abort_on_drop::ChildTask::from(tokio::spawn(async { }));
+/// # })
+/// ```
 impl<T> From<JoinHandle<T>> for ChildTask<T> {
     fn from(inner: JoinHandle<T>) -> Self {
         Self { inner }
